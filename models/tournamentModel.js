@@ -4,8 +4,7 @@ const tournamentSchema = new mongoose.Schema({
     title: {
         type: String,
         required: [true, 'Title is required'],
-        trim: true,
-        unique: true
+        trim: true
     },
     game: {
         type: String,
