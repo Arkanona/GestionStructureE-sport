@@ -64,7 +64,7 @@ exports.joinTeam = async (req, res) => {
             return res.status(404).json({ message: 'User not found' })
         }
 
-        const idTeammate = teammateInfos.email
+        const idTeammate = teammateInfos._id
         const isTeammateExists = team.teammate.includes(idTeammate)
         if(isTeammateExists){
             return res.status(400).json({ message: 'You are already on this team'})

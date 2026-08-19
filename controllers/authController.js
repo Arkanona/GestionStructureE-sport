@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/userModel')
 const validator = require('validator')
+const bcrypt = require('bcryptjs')
 
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRES_IN = '365d'
@@ -102,4 +103,36 @@ const login = async (req, res) => {
     }
 }
 
-module.exports = { register, login }
+//US4
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.params.id
+        const { newName, newPassword, newEmail } = req.body
+
+        const user = await User.findById(userId)
+        if (!user) {
+            return res.status(404).json({ message: "User not found" })
+        }
+
+        if (newName) {
+            user.name = newName
+        }
+
+        if (newPassword) {
+            user.password = newPassword
+        }
+
+        if (newEmail) {
+            user.email = newEmail
+        }
+
+        await user.save()
+
+        res.status(200).json({ message: "Profile update !" })
+
+    } catch (err) {
+        res.status(500).json({ message: "Server error during update profile", error: err.message })
+    }
+};
+
+module.exports = { register, login, updateProfile }
