@@ -11,6 +11,7 @@ require('./config/db')
 
 const authRoutes = require('./routes/authRoutes')
 const teamRoutes = require('./routes/teamRoutes')
+const tournamentRoutes = require('./routes/tournamentRoutes')
 
 const { crossOriginResourcePolicy } = require('helmet')
 
@@ -36,6 +37,7 @@ app.use(express.json())
 
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/team', teamRoutes)
+app.use('/api/v1/tournament', tournamentRoutes)
 
 app.get('/', (req, res) => {
     res.send("Gestion d'une plateforme E-sport")
