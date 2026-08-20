@@ -146,9 +146,9 @@ const updateRole = async (req, res) => {
         const userId = req.params.id
         const { newRole } = req.body
 
-        const validRoles = ['user', 'captain', 'admin', 'organizer']
+        const validRoles = ['user', 'captain', 'admin', 'organizer', 'player']
         if (!validRoles.includes(newRole)) {
-            return res.status(400).json({ message: 'You need to provide "newRole" on "user", "admin", "captain" or "organizer"' })
+            return res.status(400).json({ message: 'You need to provide "newRole" on "user", "admin", "captain", "player" or "organizer"' })
         }
 
         const userToUpdate = await User.findById(userId)

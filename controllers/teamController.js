@@ -280,7 +280,7 @@ exports.deleteTeam = async (req, res) => {
     }
 }
 
-//US17 a revoir
+//US17
 exports.checkTeam = async (req, res) => {
     try{
         const idTeam = req.params.idTeam || req.params.teamId
@@ -291,8 +291,13 @@ exports.checkTeam = async (req, res) => {
 
         const team = await Team.findById(idTeam)
                 
-        if(!isTeamTeammate(team, req.user._id)){
-            return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
+        const user = await User.findById(req.user._id)
+
+        const isPlayer = user && user.role === 'player'
+        const isCaptain = user && user.role === 'captain'
+
+        if (!isPlayer && !isCaptain) {
+            return res.status(403).json({ message: 'Only player and captain can see the other teams' })
         }
         
         const isCheckTeam = await Team.find({
