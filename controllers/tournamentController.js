@@ -97,30 +97,35 @@ exports.updateTournament = async (req, res) => {
     }
 }
 
-//US10 A FINIR
+//US10
 exports.deleteTournament = async (req, res) => {
-    try{
+    try {
         const idTournament = req.params.id || req.params.idTournament
 
-         if(!idTournament){
-            return res.status(400).json({ message: 'Tournament ID is required'})
+        if (!idTournament) {
+            return res.status(400).json({ message: 'Tournament ID is required' })
         }
-        
-        const user = await User.findById(idTournament)
+
         const tournament = await Tournament.findById(idTournament)
-        if(!tournament){
-            return res.status(404).json({ message: 'Tournament not found'})
+
+        if (!tournament) {
+            return res.status(404).json({ message: "Tournament not found or already deleted" })
         }
 
-        if(tournament.organizer.toString() || user.admin.toString() !== req.user._id.toString()){
-            return res.status(403).json({ message: 'Only organizer or admin can remove a tournament'})
-        } // partie a revoir
+        const user = await User.findById(req.user._id)
+        
+        const isOrganizer = tournament.organizer.toString() === req.user._id.toString()
+        const isAdmin = user && user.admin === true 
 
-        tournament.pop(idTournament)
+        if (!isOrganizer && !isAdmin) {
+            return res.status(403).json({ message: 'Only organizer or admin can remove a tournament' })
+        }
 
-        const updateTournament = await tournament.save()
-        res.status(200).json(updateTournament)
-    }catch(err){
-        res.status(500).json({ message: err.message})
+        await Tournament.findByIdAndDelete(idTournament)
+
+        return res.status(200).json({ message: "Tournament successfully deleted !" })
+
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
     }
 }
