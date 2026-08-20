@@ -1,12 +1,20 @@
 const Tournament = require('../models/tournamentModel')
 const User = require('../models/userModel')
-const {formatDate} = require('../helpers/formatDate')
+const Team = require('../models/teamModel')
+const { formatDate } = require('../helpers/formatDate')
 
+const isTeamTeammate = (team, userId) => {
+    if(!team || !userId) return false
+    const userIdStr = userId.toString()
+    const isCaptain = team.captain && team.captain.toString() === userIdStr
+    const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
+    return isCaptain || isTeammate
+}
 
-//US8
+//US8 & US12 for the status of the tournament
 exports.createTournament = async (req, res) => {
     try{
-        const { title, game, date, rules } = req.body
+        const { title, game, date, rules, status } = req.body
 
         if(!title){
             res.status(400).json({ error: 'You must provide title'})
@@ -24,13 +32,25 @@ exports.createTournament = async (req, res) => {
             res.status(400).json({ error: 'You must provide rules'})
         }
 
+        if(!status){
+            res.status(400).json({ error: 'You need to provide status on "open" or "close"'})
+        }
+        
         const tournament = new Tournament({
             title,
             game,
             date,
             rules,
+            status,
             organizer: req.user._id
         })
+        
+        if (status === 'open' || status === 'close') {
+            tournament.status = (status === 'open') 
+
+        } else {
+            return res.status(400).json({ message: 'You need to provide status on "open" or "close"' })
+        }
 
         const newTournament = await tournament.save()
         const objTournament = newTournament.toObject()
@@ -46,7 +66,7 @@ exports.createTournament = async (req, res) => {
 exports.updateTournament = async (req, res) => {
     try{
         const tournamentId = req.params.id || req.params.tournamentId
-        const { newTitle, newGame, newDate, newRules } = req.body
+        const { newTitle, newGame, newDate, newRules, newStatus } = req.body
 
         const tournament = await Tournament.findById(tournamentId)
         if (!tournament) {
@@ -68,6 +88,14 @@ exports.updateTournament = async (req, res) => {
         if (newRules) {
             tournament.rules = newRules
         }
+       
+        if (newStatus === 'open' || newStatus === 'close') {
+            tournament.status = (newStatus === 'open')
+
+        } else {
+            return res.status(400).json({ message: 'You need to provide status on "open" or "close"' })
+        }
+
 
         // if (!newTitle) {
         //     return res.status(404).json({ message: "Use 'newTitle' for update" })
@@ -126,6 +154,21 @@ exports.deleteTournament = async (req, res) => {
         return res.status(200).json({ message: "Tournament successfully deleted !" })
 
     } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+//US12
+exports.openTournament = async (req, res) => {
+    try{
+        const isOpenTournament = await Tournament.find({
+            $or: [
+                { status: true }
+            ]
+        })
+
+        res.status(200).json(isOpenTournament || [])
+    }catch(err){
         return res.status(500).json({ message: err.message })
     }
 }

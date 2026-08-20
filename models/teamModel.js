@@ -15,6 +15,11 @@ const teamSchema = new mongoose.Schema({
     teammate: {
         type: Array,
         default: []
+    },
+    tournament: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tournament',
+        required: [true, 'Tournament is required']
     }
 })
 

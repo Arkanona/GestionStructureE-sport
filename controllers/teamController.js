@@ -1,12 +1,13 @@
 const User = require('../models/userModel')
 const Team = require('../models/teamModel')
+const Tournament = require('../models/tournamentModel')
 
 const isTeamTeammate = (team, userId) => {
     if(!team || !userId) return false
     const userIdStr = userId.toString()
     const isCaptain = team.captain && team.captain.toString() === userIdStr
-    //const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
-    return isCaptain //|| isTeammate
+    const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
+    return isCaptain || isTeammate
 }
 
 //US5
@@ -159,5 +160,51 @@ exports.removeTeammate = async (req, res) => {
 
     }catch(err){
         res.status(500).json({ message: err.message })
+    }
+}
+
+//US 11
+exports.inscriptionTournament = async (req, res) => {
+    try{
+        const idTeam = req.params.idTeam
+        const idTournament = req.params.idTournament
+        
+
+        if(!idTeam){
+            return res.status(400).json({ message: 'Team ID is required'})
+        }
+
+        const team = await Team.findById(idTeam)
+        if(!team){
+            return res.status(400).json({ message: 'Team not found'})
+        }
+
+        const tournament = await Tournament.findById(idTournament)
+        if(!tournament){
+            return res.status(404).json({ message: 'Tournament not found'})
+        }
+        
+        if(!isTeamTeammate(team, req.user._id)){
+            return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
+        }
+
+        team.tournament = tournament._id
+
+        const savedTeam = await team.save()
+
+        const updateTeam = await savedTeam.populate('tournament', 'title date')
+        res.status(200).json(updateTeam)
+
+    } catch(err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+//US12 
+exports.openTournament = async (req, res) => {
+    try{
+        
+    }catch(err){
+        return res.status(500).json({ message: err.message })
     }
 }
