@@ -163,8 +163,8 @@ exports.removeTeammate = async (req, res) => {
     }
 }
 
-//US 11
-exports.inscriptionTournament = async (req, res) => {
+//US 11 Add tournament inscription on teams collection
+exports.inscriptionTournament = async (req, res, next) => {
     try{
         const idTeam = req.params.idTeam
         const idTournament = req.params.idTournament
@@ -188,23 +188,61 @@ exports.inscriptionTournament = async (req, res) => {
             return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
         }
 
-        team.tournament = tournament._id
+        const isTeamExists = team.tournament && team.tournament.includes(idTournament)
 
-        const savedTeam = await team.save()
+        if (isTeamExists) {
+            return res.status(400).json({ message: 'You are already on this tournament' })
+        }
 
-        const updateTeam = await savedTeam.populate('tournament', 'title date')
-        res.status(200).json(updateTeam)
+        team.tournament.push(tournament._id)
+
+        await team.save()
+
+        next()
 
     } catch(err) {
         return res.status(500).json({ message: err.message })
     }
 }
 
-//US12 
-exports.openTournament = async (req, res) => {
+//US11 Add team incription on tournaments collection
+exports.inscriptionTeamTournament = async (req, res) => {
     try{
+        const idTeam = req.params.idTeam
+        const idTournament = req.params.idTournament
         
-    }catch(err){
+
+        if(!idTournament){
+            return res.status(400).json({ message: 'Tournament ID is required'})
+        }
+
+        const team = await Team.findById(idTeam)
+        if(!team){
+            return res.status(400).json({ message: 'Team not found'})
+        }
+
+        const tournament = await Tournament.findById(idTournament)
+        if(!tournament){
+            return res.status(404).json({ message: 'Tournament not found'})
+        }
+        
+        if(!isTeamTeammate(team, req.user._id)){
+            return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
+        }
+
+        const isTournamentExists = tournament.team && tournament.team.includes(idTeam)
+        if (isTournamentExists) {
+            return res.status(400).json({ message: 'You are already on this tournament' })
+        }
+
+        tournament.team.push(team._id)
+
+        const savedTournament = await tournament.save()
+
+        const updateTournament = await savedTournament.populate('team', 'title')
+        res.status(200).json(updateTournament)
+
+    } catch(err) {
         return res.status(500).json({ message: err.message })
     }
 }

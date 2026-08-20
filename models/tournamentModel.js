@@ -24,6 +24,11 @@ const tournamentSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    team: [{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Team',
+            required: [true, 'Team is required']
+        }],
     status: {
         type: Boolean,
         required: [true, 'The status open / close is required'],

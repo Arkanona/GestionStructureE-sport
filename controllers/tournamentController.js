@@ -3,13 +3,13 @@ const User = require('../models/userModel')
 const Team = require('../models/teamModel')
 const { formatDate } = require('../helpers/formatDate')
 
-const isTeamTeammate = (team, userId) => {
-    if(!team || !userId) return false
-    const userIdStr = userId.toString()
-    const isCaptain = team.captain && team.captain.toString() === userIdStr
-    const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
-    return isCaptain || isTeammate
-}
+// const isTeamTeammate = (team, userId) => {
+//     if(!team || !userId) return false
+//     const userIdStr = userId.toString()
+//     const isCaptain = team.captain && team.captain.toString() === userIdStr
+//     const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
+//     return isCaptain || isTeammate
+// }
 
 //US8 & US12 for the status of the tournament
 exports.createTournament = async (req, res) => {
@@ -168,6 +168,32 @@ exports.openTournament = async (req, res) => {
         })
 
         res.status(200).json(isOpenTournament || [])
+    }catch(err){
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+//US13 a revoir
+exports.inscriptionTeamTournament = async (req, res) => {
+    try{
+        const idTournament = req.params.id || req.params.idTournament
+
+        const tournament = await Tournament.findById(idTournament)
+        
+        const isOrganizer = tournament.organizer.toString() === req.user._id.toString()
+
+        if (!isOrganizer) {
+            return res.status(403).json({ message: 'Only the organizer can see the registered teams. ' })
+        }
+        
+        const isInscriptionTournament = await Tournament.find({
+            $or: [
+                
+                { team: tournament.team }
+            ]
+        })
+
+        res.status(200).json(isInscriptionTournament || [])
     }catch(err){
         return res.status(500).json({ message: err.message })
     }

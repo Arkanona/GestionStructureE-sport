@@ -16,11 +16,13 @@ const teamSchema = new mongoose.Schema({
         type: Array,
         default: []
     },
-    tournament: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tournament',
-        required: [true, 'Tournament is required']
-    }
+    tournament: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Tournament',
+            required: [true, 'Tournament is required']
+        }
+    ]
 })
 
 module.exports = mongoose.model('Team', teamSchema)
