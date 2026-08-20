@@ -246,3 +246,66 @@ exports.inscriptionTeamTournament = async (req, res) => {
         return res.status(500).json({ message: err.message })
     }
 }
+
+//US14
+exports.deleteTeam = async (req, res) => {
+    try{
+
+        const idTeam = req.params.idTeam || req.params.teamId
+
+        if(!idTeam){
+            return res.status(400).json({ message: 'Team ID is required'})
+        }
+
+        const team = await Team.findById(idTeam)
+        
+        if (!team) {
+            return res.status(404).json({ message: "Tournament not found or already deleted" })
+        }
+        
+        const user = await User.findById(req.user._id)
+
+        const isAdmin = user && user.role === 'admin'
+
+        if (!isAdmin) {
+            return res.status(403).json({ message: 'Only admin can delete a team' })
+        }
+
+        await Team.findByIdAndDelete(idTeam)
+
+        return res.status(200).json({ message: "Team successfully deleted !" })
+        
+    } catch(err){
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+//US17 a revoir
+exports.checkTeam = async (req, res) => {
+    try{
+        const idTeam = req.params.idTeam || req.params.teamId
+
+        if(!idTeam){
+            return res.status(400).json({ message: 'Team ID is required'})
+        }
+
+        const team = await Team.findById(idTeam)
+                
+        if(!isTeamTeammate(team, req.user._id)){
+            return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
+        }
+        
+        const isCheckTeam = await Team.find({
+            $or: [
+                
+                { title: req.body.title },
+                { captain: req.user._id },
+                { teammate: req.user._id }
+            ]
+        })
+
+        res.status(200).json(isCheckTeam || [])
+    }catch(err){
+        return res.status(500).json({ message: err.message })
+    }
+}

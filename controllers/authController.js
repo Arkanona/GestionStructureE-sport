@@ -135,4 +135,36 @@ const updateProfile = async (req, res) => {
     }
 };
 
-module.exports = { register, login, updateProfile }
+//US16
+const updateRole = async (req, res) => {
+    try {
+        const isAdmin = req.user
+        if (!isAdmin || isAdmin.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admin can update a role' })
+        }
+
+        const userId = req.params.id
+        const { newRole } = req.body
+
+        const validRoles = ['user', 'captain', 'admin', 'organizer']
+        if (!validRoles.includes(newRole)) {
+            return res.status(400).json({ message: 'You need to provide "newRole" on "user", "admin", "captain" or "organizer"' })
+        }
+
+        const userToUpdate = await User.findById(userId)
+        if (!userToUpdate) {
+            return res.status(404).json({ message: "User not found" })
+        }
+
+        userToUpdate.role = newRole 
+        await userToUpdate.save()
+
+        res.status(200).json({ message: "Profile update !" })
+
+    } catch(err) {
+        res.status(500).json({ message: "Server error during update role", error: err.message })
+    }
+}
+
+
+module.exports = { register, login, updateProfile, updateRole }

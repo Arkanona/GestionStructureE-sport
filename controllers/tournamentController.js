@@ -143,7 +143,7 @@ exports.deleteTournament = async (req, res) => {
         const user = await User.findById(req.user._id)
         
         const isOrganizer = tournament.organizer.toString() === req.user._id.toString()
-        const isAdmin = user && user.admin === true 
+        const isAdmin = user && user.admin === 'admin' 
 
         if (!isOrganizer && !isAdmin) {
             return res.status(403).json({ message: 'Only organizer or admin can remove a tournament' })
@@ -173,7 +173,7 @@ exports.openTournament = async (req, res) => {
     }
 }
 
-//US13 a revoir
+//US13
 exports.inscriptionTeamTournament = async (req, res) => {
     try{
         const idTournament = req.params.id || req.params.idTournament
@@ -186,6 +186,38 @@ exports.inscriptionTeamTournament = async (req, res) => {
             return res.status(403).json({ message: 'Only the organizer can see the registered teams. ' })
         }
         
+        const isInscriptionTournament = await Tournament.find({
+            $or: [
+                
+                { team: tournament.team }
+            ]
+        })
+
+        res.status(200).json(isInscriptionTournament || [])
+    }catch(err){
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+//US15 à re vérifier
+exports.numberTeamRegistered = async (req, res) => {
+    try{
+        const idTeam = req.params.idTeam
+        const idTournament = req.params.idTournament
+
+        if(!idTournament){
+            return res.status(400).json({ message: 'Tournament ID is required'})
+        }
+
+        const user = await User.findById(req.user._id)
+        const isAdmin = user && user.role === 'admin'
+
+        if (!isAdmin) {
+            return res.status(403).json({ message: 'Only admin can delete a team' })
+        }
+
+        const tournament = await Tournament.findById(idTournament)
+
         const isInscriptionTournament = await Tournament.find({
             $or: [
                 
