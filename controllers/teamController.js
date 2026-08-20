@@ -36,7 +36,7 @@ exports.createTeam = async (req, res) => {
     }
 }
 
-//US6
+//US6 AJOUTER LE FAIT D AVOIR LE ROLE PLAYER QUAND ON JOIN
 exports.joinTeam = async (req, res) => {
     try{
         const { title, teammate } = req.body

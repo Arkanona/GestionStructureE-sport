@@ -3,13 +3,6 @@ const User = require('../models/userModel')
 const Team = require('../models/teamModel')
 const { formatDate } = require('../helpers/formatDate')
 
-// const isTeamTeammate = (team, userId) => {
-//     if(!team || !userId) return false
-//     const userIdStr = userId.toString()
-//     const isCaptain = team.captain && team.captain.toString() === userIdStr
-//     const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
-//     return isCaptain || isTeammate
-// }
 
 //US8 & US12 for the status of the tournament
 exports.createTournament = async (req, res) => {
@@ -226,6 +219,15 @@ exports.numberTeamRegistered = async (req, res) => {
         })
 
         res.status(200).json(isInscriptionTournament || [])
+    }catch(err){
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+//US18
+exports.checkTournament = async (req, res) => {
+    try{
+
     }catch(err){
         return res.status(500).json({ message: err.message })
     }
