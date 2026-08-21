@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test:all": "node --test",
+    "test:all": "node --test tests/us.test.js",
     "test:auth": "node --test tests/1_auth.test.js",
     "test:profile": "node --test tests/2_userProfile.test.js",
     "test:team": "node --test tests/3_teamManagement.test.js",

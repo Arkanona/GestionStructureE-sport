@@ -195,8 +195,6 @@ exports.numberTeamRegistered = async (req, res) => {
             return res.status(403).json({ message: 'Only admin can see the registered team' })
         }
 
-        
-
         res.status(200).json({
             tournament: tournament.title,
             teamRegistered: tournament.team.length

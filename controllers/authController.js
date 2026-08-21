@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/userModel')
 const validator = require('validator')
-const bcrypt = require('bcryptjs')
 
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRES_IN = '365d'
