@@ -1,14 +1,8 @@
 const User = require('../models/userModel')
 const Team = require('../models/teamModel')
 const Tournament = require('../models/tournamentModel')
+const { isTeamTeammate } = require('../helpers/teamHelpers')
 
-const isTeamTeammate = (team, userId) => {
-    if(!team || !userId) return false
-    const userIdStr = userId.toString()
-    const isCaptain = team.captain && team.captain.toString() === userIdStr
-    const isTeammate = team.teammate && team.teammate.some(id => id.toString() === userIdStr)
-    return isCaptain || isTeammate
-}
 
 //US5
 exports.createTeam = async (req, res) => {
@@ -29,6 +23,13 @@ exports.createTeam = async (req, res) => {
         })
 
         const newTeam = await team.save()
+
+        const user = await User.findById(req.user._id)
+        if(user && !user.role.includes('captain')){
+            user.role.push('captain')
+            await user.save()
+        }
+
         res.status(201).json(newTeam)
 
     } catch(err) {
@@ -36,7 +37,7 @@ exports.createTeam = async (req, res) => {
     }
 }
 
-//US6 AJOUTER LE FAIT D AVOIR LE ROLE PLAYER QUAND ON JOIN
+//US6
 exports.joinTeam = async (req, res) => {
     try{
         const { title, teammate } = req.body
@@ -74,6 +75,11 @@ exports.joinTeam = async (req, res) => {
         team.teammate.push(idTeammate)
 
         const updateTeam = await team.save()
+
+        if(!teammateInfos.role.includes('player')){
+            teammateInfos.role.push('player')
+            await teammateInfos.save()
+        }
         res.status(200).json(updateTeam)
     }catch(err){
         res.status(500).json({ message: err.message })
@@ -117,6 +123,11 @@ exports.inviteTeammate = async (req, res) => {
         team.teammate.push(idTeammate)
 
         const updateTeam = await team.save()
+        if(!teammateInfos.role.includes('player')){
+            teammateInfos.role.push('player')
+            await teammateInfos.save()
+        }
+
         res.status(200).json(updateTeam)
 
     }catch(err){
@@ -153,9 +164,16 @@ exports.removeTeammate = async (req, res) => {
         }
         
         const idTeammate = teammateInfos._id
-        team.teammate.pop(idTeammate)
 
+        team.teammate.pull(idTeammate)
         const updateTeam = await team.save()
+
+        const otherTeam = await Team.findOne({ teammate: idTeammate })
+        if(!otherTeam){
+            teammateInfos.role = teammateInfos.role.filter(r => r != 'player')
+            await teammateInfos.save()
+        }
+
         res.status(200).json(updateTeam)
 
     }catch(err){
@@ -188,7 +206,7 @@ exports.inscriptionTournament = async (req, res, next) => {
             return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
         }
 
-        const isTeamExists = team.tournament && team.tournament.includes(idTournament)
+        const isTeamExists = team.tournament && team.tournament.some(id => id.toString() === idTournament)
 
         if (isTeamExists) {
             return res.status(400).json({ message: 'You are already on this tournament' })
@@ -230,7 +248,7 @@ exports.inscriptionTeamTournament = async (req, res) => {
             return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
         }
 
-        const isTournamentExists = tournament.team && tournament.team.includes(idTeam)
+        const isTournamentExists = tournament.team && tournament.team.some(id => id.toString() === idTeam)
         if (isTournamentExists) {
             return res.status(400).json({ message: 'You are already on this tournament' })
         }
@@ -265,7 +283,7 @@ exports.deleteTeam = async (req, res) => {
         
         const user = await User.findById(req.user._id)
 
-        const isAdmin = user && user.role === 'admin'
+        const isAdmin = user && user.role.includes('admin')
 
         if (!isAdmin) {
             return res.status(403).json({ message: 'Only admin can delete a team' })
@@ -290,26 +308,20 @@ exports.checkTeam = async (req, res) => {
         }
 
         const team = await Team.findById(idTeam)
+        if(!team){
+            return res.status(404).json({ message: 'Team not found' })
+        }
                 
         const user = await User.findById(req.user._id)
 
-        const isPlayer = user && user.role === 'player'
-        const isCaptain = user && user.role === 'captain'
+        const isPlayer = user && user.role.includes('player')
+        const isCaptain = user && user.role.includes('captain')
 
         if (!isPlayer && !isCaptain) {
             return res.status(403).json({ message: 'Only player and captain can see the other teams' })
         }
-        
-        const isCheckTeam = await Team.find({
-            $or: [
-                
-                { title: req.body.title },
-                { captain: req.user._id },
-                { teammate: req.user._id }
-            ]
-        })
 
-        res.status(200).json(isCheckTeam || [])
+        res.status(200).json(team)
     }catch(err){
         return res.status(500).json({ message: err.message })
     }

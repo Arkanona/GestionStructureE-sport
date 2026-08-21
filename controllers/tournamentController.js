@@ -2,6 +2,7 @@ const Tournament = require('../models/tournamentModel')
 const User = require('../models/userModel')
 const Team = require('../models/teamModel')
 const { formatDate } = require('../helpers/formatDate')
+const { isTeamTeammate } = require('../helpers/teamHelpers')
 
 
 //US8 & US12 for the status of the tournament
@@ -55,7 +56,7 @@ exports.createTournament = async (req, res) => {
     }
 }
 
-//US9 A COMPLÉTER
+//US9
 exports.updateTournament = async (req, res) => {
     try{
         const tournamentId = req.params.id || req.params.tournamentId
@@ -64,6 +65,9 @@ exports.updateTournament = async (req, res) => {
         const tournament = await Tournament.findById(tournamentId)
         if (!tournament) {
             return res.status(404).json({ message: "Tournament not found" })
+        }
+        if(tournament.organizer.toString() !== req.user._id.toString()){
+            return res.status(403).json({ message: 'Only organizer can update'})
         }
 
         if (newTitle) {
@@ -82,32 +86,12 @@ exports.updateTournament = async (req, res) => {
             tournament.rules = newRules
         }
        
-        if (newStatus === 'open' || newStatus === 'close') {
-            tournament.status = (newStatus === 'open')
-
-        } else {
-            return res.status(400).json({ message: 'You need to provide status on "open" or "close"' })
-        }
-
-
-        // if (!newTitle) {
-        //     return res.status(404).json({ message: "Use 'newTitle' for update" })
-        // }
-
-        // if (!newGame) {
-        //     return res.status(404).json({ message: "Use 'newGame' for update" })
-        // }
-
-        // if (!newDate) {
-        //     return res.status(404).json({ message: "Use 'newDate' for update" })
-        // }
-
-        // if (!newRules) {
-        //     return res.status(404).json({ message: "Use 'newRules' for update" })
-        // }
-
-        if(tournament.organizer.toString() !== req.user._id.toString()){
-            return res.status(403).json({ message: 'Only organizer can update'})
+        if (newStatus !== undefined) {
+            if (newStatus === 'open' || newStatus === 'close') {
+                tournament.status = (newStatus === 'open')
+            } else {
+                return res.status(400).json({ message: 'You need to provide status on "open" or "close"' })
+            }
         }
 
         await tournament.save()
@@ -192,10 +176,9 @@ exports.inscriptionTeamTournament = async (req, res) => {
     }
 }
 
-//US15 à re vérifier
+//US15
 exports.numberTeamRegistered = async (req, res) => {
     try{
-        const idTeam = req.params.idTeam
         const idTournament = req.params.idTournament
 
         if(!idTournament){
@@ -203,22 +186,18 @@ exports.numberTeamRegistered = async (req, res) => {
         }
 
         const user = await User.findById(req.user._id)
-        const isAdmin = user && user.role === 'admin'
+        const isAdmin = user && user.role.includes('admin')
 
         if (!isAdmin) {
-            return res.status(403).json({ message: 'Only admin can delete a team' })
+            return res.status(403).json({ message: 'Only admin can see the registered team' })
         }
 
         const tournament = await Tournament.findById(idTournament)
 
-        const isInscriptionTournament = await Tournament.find({
-            $or: [
-                
-                { team: tournament.team }
-            ]
+        res.status(200).json({
+            tournament: tournament.title,
+            teamRegistered: tournament.team.length
         })
-
-        res.status(200).json(isInscriptionTournament || [])
     }catch(err){
         return res.status(500).json({ message: err.message })
     }
@@ -227,7 +206,21 @@ exports.numberTeamRegistered = async (req, res) => {
 //US18
 exports.checkTournament = async (req, res) => {
     try{
+        const idTeam = req.params.idTeam
+        if(!idTeam){
+            return res.status(400).json({ message: 'Team ID is required'})
+        }
 
+        const team = await Team.findById(idTeam).populate('tournament', 'title game date status')
+        if(!team){
+            return res.status(404).json({ message: 'Team not found' })
+        }
+
+        if(!isTeamTeammate(team, req.user._id)){
+            return res.status(403).json({ message: 'Only members of this team can see its registered tournaments' })
+        }
+
+        res.status(200).json(team.tournament)
     }catch(err){
         return res.status(500).json({ message: err.message })
     }

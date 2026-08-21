@@ -138,8 +138,8 @@ const updateProfile = async (req, res) => {
 //US16
 const updateRole = async (req, res) => {
     try {
-        const isAdmin = req.user
-        if (!isAdmin || isAdmin.role !== 'admin') {
+        const isAdmin = user && user.role.includes('admin')
+        if (!isAdmin) {
             return res.status(403).json({ message: 'Only admin can update a role' })
         }
 
@@ -156,9 +156,10 @@ const updateRole = async (req, res) => {
             return res.status(404).json({ message: "User not found" })
         }
 
-        userToUpdate.role = newRole 
-        await userToUpdate.save()
-
+        if(!userToUpdate.role.includes(newRole)){
+            userToUpdate.role.push(newRole)
+            await userToUpdate.save()
+        }
         res.status(200).json({ message: "Profile update !" })
 
     } catch(err) {
