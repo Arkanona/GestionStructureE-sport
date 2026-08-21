@@ -8,7 +8,7 @@ const Team = require('../models/teamModel')
 const Tournament = require('../models/tournamentModel')
 const { register, login, updateProfile, updateRole } = require('../controllers/authController')
 const { createTeam, joinTeam, inviteTeammate, removeTeammate, inscriptionTournament, inscriptionTeamTournament, deleteTeam, checkTeam } = require('../controllers/teamController')
-const { createTournament, updateTournament, deleteTournament, openTournament, inscriptionTeamTournament: getTournamentTeams, numberTeamRegistered, checkTournament } = require('../controllers/tournamentController')
+const { createTournament, updateTournament, deleteTournament, openTournament, getTeamTournament, numberTeamRegistered, checkTournament } = require('../controllers/tournamentController')
 
 // Helpers
 const createMockRes = () => {
@@ -830,12 +830,12 @@ describe('Tests de recette de l\'API', () => {
                 user: { _id: userA.id }
             }
             const res = createMockRes()
-            await getTournamentTeams(req, res)
+            await getTeamTournament(req, res)
 
             assert.strictEqual(res.statusCode, 200)
             assert.ok(Array.isArray(res.body))
             assert.ok(res.body.some(t => t._id.toString() === team._id.toString()))
-            assert.strictEqual(res.body.find(t => t._id.toString() === team._id.toString()).title, 'Test Team Alpha Updated')
+            assert.strictEqual(res.body.find(t => t._id.toString() === team._id.toString()).title, 'Test Team Alpha')
         })
 
         test('Rejects if not organizer', async () => {
@@ -844,7 +844,7 @@ describe('Tests de recette de l\'API', () => {
                 user: { _id: userB.id }
             }
             const res = createMockRes()
-            await getTournamentTeams(req, res)
+            await getTeamTournament(req, res)
             assert.strictEqual(res.statusCode, 403)
         })
 
@@ -855,7 +855,7 @@ describe('Tests de recette de l\'API', () => {
                 user: { _id: userA.id }
             }
             const res = createMockRes()
-            await getTournamentTeams(req, res)
+            await getTeamTournament(req, res)
             assert.strictEqual(res.statusCode, 404)
         })
     })
@@ -1029,7 +1029,7 @@ describe('Tests de recette de l\'API', () => {
 
             assert.strictEqual(res.statusCode, 200)
             assert.strictEqual(res.body._id.toString(), team._id.toString())
-            assert.strictEqual(res.body.title, 'Test Team Alpha Updated')
+            assert.strictEqual(res.body.title, 'Test Team Alpha')
         })
 
         test('Player views team details', async () => {

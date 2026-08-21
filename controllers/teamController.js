@@ -10,7 +10,7 @@ exports.createTeam = async (req, res) => {
         const { title } = req.body
 
         if(!title){
-            res.status(400).json({ error: 'You must provide title'})
+            return res.status(400).json({ error: 'You must provide title'})
         }
         const existingTitle = await Team.findOne({ title })
         if(existingTitle){
@@ -206,10 +206,13 @@ exports.inscriptionTournament = async (req, res, next) => {
             return res.status(403).json({ message: 'Access denied: You are not a member of this team'})
         }
 
-        const isTeamExists = team.tournament && team.tournament.some(id => id.toString() === idTournament)
+        const alreadyRegistered = team.tournament?.some(id => {
+            const targetId = id._id ? id._id.toString() : id.toString()
+            return targetId === idTournament.toString()
+        })
 
-        if (isTeamExists) {
-            return res.status(400).json({ message: 'You are already on this tournament' })
+        if (alreadyRegistered) {
+            return res.status(400).json({ message: 'Team is already registered for this tournament' })
         }
 
         team.tournament.push(tournament._id)

@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test",
+    "test:all": "node --test",
+    "test:auth": "node --test tests/1_auth.test.js",
+    "test:profile": "node --test tests/2_userProfile.test.js",
+    "test:team": "node --test tests/3_teamManagement.test.js",
+    "test:tournament": "node --test tests/4_tournamentManagement.test.js",
+    "test:registration": "node --test tests/5_tournamentRegistration.test.js",
+    "test:admin": "node --test tests/6_admin.test.js",
     "start": "node app.js"
   },
   "keywords": [],

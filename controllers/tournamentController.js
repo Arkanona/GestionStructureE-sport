@@ -11,23 +11,23 @@ exports.createTournament = async (req, res) => {
         const { title, game, date, rules, status } = req.body
 
         if(!title){
-            res.status(400).json({ error: 'You must provide title'})
+            return res.status(400).json({ error: 'You must provide title'})
         }
 
         if(!game){
-            res.status(400).json({ error: 'You must provide game'})
+            return res.status(400).json({ error: 'You must provide game'})
         }
 
         if(!date){
-            res.status(400).json({ error: 'You must provide date'})
+            return res.status(400).json({ error: 'You must provide date'})
         }
 
         if(!rules){
-            res.status(400).json({ error: 'You must provide rules'})
+            return res.status(400).json({ error: 'You must provide rules'})
         }
 
         if(!status){
-            res.status(400).json({ error: 'You need to provide status on "open" or "close"'})
+            return res.status(400).json({ error: 'You need to provide status on "open" or "close"'})
         }
         
         const tournament = new Tournament({
@@ -120,7 +120,7 @@ exports.deleteTournament = async (req, res) => {
         const user = await User.findById(req.user._id)
         
         const isOrganizer = tournament.organizer.toString() === req.user._id.toString()
-        const isAdmin = user && user.admin === 'admin' 
+        const isAdmin = user && user.role.includes('admin')
 
         if (!isOrganizer && !isAdmin) {
             return res.status(403).json({ message: 'Only organizer or admin can remove a tournament' })
@@ -151,27 +151,25 @@ exports.openTournament = async (req, res) => {
 }
 
 //US13
-exports.inscriptionTeamTournament = async (req, res) => {
-    try{
+exports.getTeamTournament = async (req, res) => {
+    try {
         const idTournament = req.params.id || req.params.idTournament
 
-        const tournament = await Tournament.findById(idTournament)
+        const tournament = await Tournament.findById(idTournament).populate('team')
         
+        if (!tournament) {
+            return res.status(404).json({ message: 'Tournament not found' })
+        }
+
         const isOrganizer = tournament.organizer.toString() === req.user._id.toString()
 
         if (!isOrganizer) {
-            return res.status(403).json({ message: 'Only the organizer can see the registered teams. ' })
+            return res.status(403).json({ message: 'Only the organizer can see the registered teams.' })
         }
-        
-        const isInscriptionTournament = await Tournament.find({
-            $or: [
-                
-                { team: tournament.team }
-            ]
-        })
 
-        res.status(200).json(isInscriptionTournament || [])
-    }catch(err){
+        res.status(200).json(tournament.team || [])
+
+    } catch (err) {
         return res.status(500).json({ message: err.message })
     }
 }
@@ -185,6 +183,11 @@ exports.numberTeamRegistered = async (req, res) => {
             return res.status(400).json({ message: 'Tournament ID is required'})
         }
 
+        const tournament = await Tournament.findById(idTournament)
+        if(!tournament){
+            return res.status(404).json({ message: 'Tournament not found'})
+        }
+
         const user = await User.findById(req.user._id)
         const isAdmin = user && user.role.includes('admin')
 
@@ -192,7 +195,7 @@ exports.numberTeamRegistered = async (req, res) => {
             return res.status(403).json({ message: 'Only admin can see the registered team' })
         }
 
-        const tournament = await Tournament.findById(idTournament)
+        
 
         res.status(200).json({
             tournament: tournament.title,

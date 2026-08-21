@@ -138,13 +138,14 @@ const updateProfile = async (req, res) => {
 //US16
 const updateRole = async (req, res) => {
     try {
+        const userId = req.params.id
+        const user = await User.findById(req.user._id)
+        const { newRole } = req.body
+
         const isAdmin = user && user.role.includes('admin')
         if (!isAdmin) {
             return res.status(403).json({ message: 'Only admin can update a role' })
         }
-
-        const userId = req.params.id
-        const { newRole } = req.body
 
         const validRoles = ['user', 'captain', 'admin', 'organizer', 'player']
         if (!validRoles.includes(newRole)) {
