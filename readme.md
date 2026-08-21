@@ -121,7 +121,7 @@ Le serveur est accessible par défaut sur `http://localhost:3000`.
 Les tests d'intégration couvrent 18 user stories et utilisent le test runner natif de Node.js.
 
 ```bash
-npm run test
+npm run test:all
 ```
 
 ## 👤 Auteur
